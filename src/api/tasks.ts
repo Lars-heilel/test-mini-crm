@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { TaskWithRelations } from '@/lib/types'
+import type { TaskHistoryEntry, TaskStatus, TaskWithRelations } from '@/lib/types'
 
 export interface TaskInput {
   object_id: string
@@ -61,6 +61,31 @@ export async function updateTask(id: string, input: TaskInput): Promise<void> {
 
 export async function softDeleteTask(id: string): Promise<void> {
   const { error } = await supabase.from('tasks').update({ is_deleted: true }).eq('id', id)
+
+  if (error) throw new Error(error.message)
+}
+
+export async function getTaskHistory(taskId: string): Promise<TaskHistoryEntry[]> {
+  const { data, error } = await supabase
+    .from('task_history')
+    .select('*, actor:profiles!task_history_actor_id_fkey(id,full_name,role)')
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as TaskHistoryEntry[]
+}
+
+export async function changeTaskStatus(
+  taskId: string,
+  newStatus: TaskStatus,
+  comment?: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('change_task_status', {
+    p_task_id: taskId,
+    p_new_status: newStatus,
+    p_comment: comment?.trim() || null,
+  })
 
   if (error) throw new Error(error.message)
 }

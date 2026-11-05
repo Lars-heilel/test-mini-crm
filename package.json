@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "node --test src/lib/task-actions.test.ts",
     "verify:security": "node --env-file=.env.local scripts/verify-security.mjs"
   },
   "dependencies": {
