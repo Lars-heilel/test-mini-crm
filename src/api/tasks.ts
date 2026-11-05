@@ -22,6 +22,17 @@ export async function listTasksForObject(objectId: string): Promise<TaskWithRela
   return (data ?? []) as TaskWithRelations[]
 }
 
+export async function listMyTasks(profileId: string): Promise<TaskWithRelations[]> {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select(taskSelect)
+    .eq('assignee_id', profileId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as TaskWithRelations[]
+}
+
 export async function getTask(id: string): Promise<TaskWithRelations> {
   const { data, error } = await supabase.from('tasks').select(taskSelect).eq('id', id).single()
 
