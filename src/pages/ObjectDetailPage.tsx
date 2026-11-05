@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getObject, softDeleteObject, updateObject } from '@/api/objects'
-import { createTask, listTasksForObject, type TaskInput } from '@/api/tasks'
+import { createTask, listTasksForObject, updateTask, type TaskInput } from '@/api/tasks'
 import { useAuth } from '@/auth/useAuth'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ObjectFormModal } from '@/components/ObjectFormModal'
@@ -38,6 +38,7 @@ export function ObjectDetailPage() {
 
   const [objectFormOpen, setObjectFormOpen] = useState(false)
   const [taskFormOpen, setTaskFormOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState<TaskWithRelations | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteBusy, setDeleteBusy] = useState(false)
 
@@ -97,6 +98,13 @@ export function ObjectDetailPage() {
   async function handleCreateTask(input: TaskInput) {
     await createTask(input)
     setTaskFormOpen(false)
+    refresh()
+  }
+
+  async function handleUpdateTask(input: TaskInput) {
+    if (!editingTask) return
+    await updateTask(editingTask.id, input)
+    setEditingTask(null)
     refresh()
   }
 
@@ -194,14 +202,25 @@ export function ObjectDetailPage() {
             <Card key={task.id}>
               <CardContent className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <Link className="font-medium hover:underline" to={`/tasks/${task.id}`}>
+                  <Link
+                    className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline"
+                    to={`/tasks/${task.id}`}
+                  >
                     {task.title}
+                    <span aria-hidden>→</span>
                   </Link>
                   <div className="text-xs text-muted-foreground">
                     {task.assignee.full_name} · создана {formatDate(task.created_at)}
                   </div>
                 </div>
-                <StatusBadge status={task.status} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={task.status} />
+                  {isManager && (
+                    <Button variant="outline" size="sm" onClick={() => setEditingTask(task)}>
+                      Редактировать
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -222,6 +241,15 @@ export function ObjectDetailPage() {
         objectId={object.id}
         objectName={object.name}
         onSubmit={handleCreateTask}
+      />
+
+      <TaskFormModal
+        open={Boolean(editingTask)}
+        onOpenChange={(open) => {
+          if (!open) setEditingTask(null)
+        }}
+        task={editingTask}
+        onSubmit={handleUpdateTask}
       />
 
       <ConfirmDialog

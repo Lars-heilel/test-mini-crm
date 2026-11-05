@@ -23,6 +23,11 @@ export function Layout() {
             <NavLink to="/objects" className={navClass}>
               Объекты
             </NavLink>
+            {profile?.role === 'manager' && (
+              <NavLink to="/tasks" className={navClass}>
+                Задачи
+              </NavLink>
+            )}
             {profile?.role === 'assignee' && (
               <NavLink to="/my-tasks" className={navClass}>
                 Мои задачи
