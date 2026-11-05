@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { createObject, listObjects, softDeleteObject, updateObject } from '@/api/objects'
+import { createTask, type TaskInput } from '@/api/tasks'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ObjectFormModal } from '@/components/ObjectFormModal'
+import { TaskFormModal } from '@/components/TaskFormModal'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,6 +34,7 @@ export function ObjectsPage() {
   const [editing, setEditing] = useState<ObjectRow | null>(null)
   const [deleting, setDeleting] = useState<ObjectSummary | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
+  const [taskObject, setTaskObject] = useState<ObjectSummary | null>(null)
 
   useEffect(() => {
     let active = true
@@ -68,6 +71,12 @@ export function ObjectsPage() {
     refresh()
   }
 
+  async function handleCreateTask(input: TaskInput) {
+    await createTask(input)
+    setTaskObject(null)
+    refresh()
+  }
+
   async function handleDelete() {
     if (!deleting) return
     setDeleteBusy(true)
@@ -90,7 +99,7 @@ export function ObjectsPage() {
           <h1 className="text-2xl font-semibold">Объекты</h1>
           <p className="text-sm text-muted-foreground">
             {isManager
-              ? 'Строительные объекты и количество задач по ним.'
+              ? 'Строительные объекты и количество задач по ним. Задачу можно создать прямо из карточки.'
               : 'Объекты, на которые у вас назначены задачи.'}
           </p>
         </div>
@@ -131,8 +140,12 @@ export function ObjectsPage() {
             <Card key={object.id}>
               <CardHeader>
                 <CardTitle>
-                  <Link className="hover:underline" to={`/objects/${object.id}`}>
+                  <Link
+                    className="inline-flex items-center gap-1 underline-offset-4 hover:underline"
+                    to={`/objects/${object.id}`}
+                  >
                     {object.name}
+                    <span aria-hidden>→</span>
                   </Link>
                 </CardTitle>
                 <CardDescription>{object.address}</CardDescription>
@@ -142,7 +155,10 @@ export function ObjectsPage() {
                   Задач: <span className="font-medium text-foreground">{object.task_count}</span>
                 </span>
                 {isManager && (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Button size="sm" onClick={() => setTaskObject(object)}>
+                      Новая задача
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -172,6 +188,17 @@ export function ObjectsPage() {
         }}
         initial={editing}
         onSubmit={handleSave}
+      />
+
+      <TaskFormModal
+        open={Boolean(taskObject)}
+        onOpenChange={(open) => {
+          if (!open) setTaskObject(null)
+        }}
+        task={null}
+        objectId={taskObject?.id}
+        objectName={taskObject?.name}
+        onSubmit={handleCreateTask}
       />
 
       <ConfirmDialog
