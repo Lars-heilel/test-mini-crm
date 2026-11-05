@@ -1,11 +1,28 @@
-import { Button } from '@/components/ui/button'
+import { Route, Routes } from 'react-router'
+import { HomeRedirect } from '@/auth/HomeRedirect'
+import { RequireAuth } from '@/auth/RequireAuth'
+import { Layout } from '@/components/Layout'
+import { LoginPage } from '@/pages/LoginPage'
+import { MyTasksPage } from '@/pages/MyTasksPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
+import { ObjectDetailPage } from '@/pages/ObjectDetailPage'
+import { ObjectsPage } from '@/pages/ObjectsPage'
+import { TaskDetailPage } from '@/pages/TaskDetailPage'
 
 export default function App() {
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-semibold">Мини-CRM</h1>
-      <p className="mt-2 text-muted-foreground">Каркас приложения готов.</p>
-      <Button className="mt-4">Проверка shadcn</Button>
-    </main>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<RequireAuth />}>
+        <Route element={<Layout />}>
+          <Route index element={<HomeRedirect />} />
+          <Route path="objects" element={<ObjectsPage />} />
+          <Route path="objects/:id" element={<ObjectDetailPage />} />
+          <Route path="tasks/:id" element={<TaskDetailPage />} />
+          <Route path="my-tasks" element={<MyTasksPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Route>
+    </Routes>
   )
 }
